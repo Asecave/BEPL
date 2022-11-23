@@ -1,9 +1,0 @@
-/**
- * 
- */
-/**
- * @author Asecave
- *
- */
-module BEPL {
-}
