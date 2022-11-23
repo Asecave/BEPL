@@ -13,5 +13,5 @@ This simply means: Load 'Z' into register A.
 
 BEPL gives you:
 
-00000000
+00000000\
 01011010 (Z in binary)
