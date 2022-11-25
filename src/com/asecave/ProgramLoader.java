@@ -2,14 +2,13 @@ package com.asecave;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.LinkedList;
 import java.util.Scanner;
 
 public class ProgramLoader {
 
 	private Scanner scanner;
 	
-	public LinkedList<String> load(String path) {
+	public String load(String path) {
 		try {
 			scanner = new Scanner(new File(path));
 		} catch (FileNotFoundException e) {
@@ -17,12 +16,16 @@ public class ProgramLoader {
 			return null;
 		}
 		
-		LinkedList<String> lines = new LinkedList<>();
+		StringBuilder builder = new StringBuilder();
 		
 		while (scanner.hasNext()) {
-			lines.add(scanner.nextLine());
+			String line = scanner.nextLine();
+			line = line.replaceAll(" ", "");
+			line = line.replaceAll("\n", "");
+			line = line.replaceAll("\t", "");
+			builder.append(line);
 		}
 		
-		return lines;
+		return builder.toString();
 	}
 }

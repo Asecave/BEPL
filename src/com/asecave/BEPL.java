@@ -5,17 +5,18 @@ import java.util.LinkedList;
 public class BEPL {
 
 	ProgramLoader programLoader;
+	LexicalAnalyser lexicalAnalyser;
 	Parser parser;
 
 	public BEPL() {
 		programLoader = new ProgramLoader();
 		parser = new Parser();
 
-		LinkedList<String> lines = programLoader.load("C:\\Users\\Asecave\\Desktop\\Program.txt");
+		String program = programLoader.load("C:\\Users\\Asecave\\Desktop\\Program.txt");
 
-		LinkedList<String> words = parser.parse(lines);
-		for (String s : words) {
-			System.out.println(s);
+		LinkedList<Token> tokens = parser.parse(program.toCharArray());
+		for (Token t : tokens) {
+			System.out.println(t.getType() + " : " + t.getSnippet());
 		}
 	}
 }
