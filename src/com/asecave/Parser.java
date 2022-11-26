@@ -2,60 +2,57 @@ package com.asecave;
 
 import java.util.LinkedList;
 
+import com.asecave.syntax.BEPLClass;
+import com.asecave.syntax.Command;
+
 public class Parser {
 
-	public Parser() {
-	}
+	public LinkedList<BEPLClass> parse(LinkedList<Token> tokens) {
 
-	public LinkedList<Token> parse(char[] program) {
+		LinkedList<BEPLClass> classes = new LinkedList<>();
 
-		LinkedList<Token> tokens = new LinkedList<>();
+		BEPLClass currentClass = null;
+		Command currentCommand = null;
 
-		String snippet = "";
-
-		for (char c : program) {
-
-			if (";{}".indexOf(c) != -1) {
-				int type = getType(snippet);
-				if (type != -1) {
-					tokens.add(new Token(type, snippet));
-				}
-				snippet = "";
-				switch (c) {
-				case ';':
-					tokens.add(new Token(Token.SEMICOLON, "" + c));
-					break;
-				case '{':
-					tokens.add(new Token(Token.BRACE_OPEN, "" + c));
-					break;
-				case '}':
-					tokens.add(new Token(Token.BRACE_CLOSE, "" + c));
-					break;
+		for (Token t : tokens) {
+			if (currentClass != null) {
+				if (currentClass.hasOpeningBrace()) {
+					if (currentCommand == null) {
+						if (t.getType() == Token.BRACE_CLOSE) {
+							currentClass.setClosingBrace(t);
+							classes.add(currentClass);
+							currentClass = null;
+							continue;
+						}
+						currentCommand = new Command();
+					}
+					if (t.getType() == Token.SEMICOLON) {
+						currentClass.addCommand(currentCommand);
+						currentCommand = null;
+					} else if (t.getType() == Token.BRACE_CLOSE) {
+						System.err.println("Unexpected token: '" + t.getSnippet() + "'");
+					} else if (t.getType() == Token.BRACE_OPEN) {
+						System.err.println("Unexpected token: '" + t.getSnippet() + "'");
+					} else {
+						currentCommand.addToken(t);
+					}
+				} else {
+					if (t.getType() == Token.BRACE_OPEN) {
+						currentClass.setOpeningBrace(t);
+					} else {
+						System.err.println("Unexpected token: '" + t.getSnippet() + "' Expected '{'.");
+					}
 				}
 			} else {
-				snippet += c;
-			}
-		}
-
-		return tokens;
-	}
-
-	private int getType(String snippet) {
-		int type = -1;
-		if (snippet.length() == 0) {
-			return -1;
-		}
-		if ("ianc".indexOf(snippet.charAt(0)) != -1 && snippet.length() == 9) {
-			type = Token.BINARY;
-			for (int i = 1; i < snippet.length(); i++) {
-				if (snippet.charAt(i) != '0' && snippet.charAt(i) != '1') {
-					type = -1;
+				if (t.getType() == Token.NAME) {
+					currentClass = new BEPLClass(t);
+				} else {
+					System.err.println("Unexpected token: '" + t.getSnippet() + "' Expected NAME.");
 				}
 			}
 		}
-		if (type == -1) {
-			type = Token.NAME;
-		}
-		return type;
+
+		return classes;
 	}
+
 }
