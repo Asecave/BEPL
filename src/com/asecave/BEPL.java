@@ -27,6 +27,7 @@ public class BEPL {
 		for (BEPLClass bc : classes) {
 			System.out.println(bc);
 		}
-		codeGenerator.generate(classes);
+		System.out.println("\n");
+		System.out.println(codeGenerator.generate(classes));
 	}
 }

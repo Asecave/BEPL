@@ -21,6 +21,10 @@ public class ProgramLoader {
 		while (scanner.hasNext()) {
 			String line = scanner.nextLine();
 			line = line.replaceAll(" ", "");
+			int commentIndex = line.indexOf("#");
+			if (commentIndex != -1) {
+				line = line.substring(0, commentIndex);
+			}
 			line = line.replaceAll("\n", "");
 			line = line.replaceAll("\t", "");
 			builder.append(line);

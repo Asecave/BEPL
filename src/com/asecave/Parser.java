@@ -27,6 +27,7 @@ public class Parser {
 						currentCommand = new Command();
 					}
 					if (t.getType() == Token.SEMICOLON) {
+						currentCommand.validate();
 						currentClass.addCommand(currentCommand);
 						currentCommand = null;
 					} else if (t.getType() == Token.BRACE_CLOSE) {
@@ -49,6 +50,37 @@ public class Parser {
 				} else {
 					System.err.println("Unexpected token: '" + t.getSnippet() + "' Expected NAME.");
 				}
+			}
+		}
+
+		int nextType = -1;
+		for (BEPLClass bc : classes) {
+			for (Command c : bc.getCommands()) {
+				if (nextType != -1 && c.getType() != nextType) {
+					System.err.println("Expected type " + nextType + " but got " + c.getType());
+				} else {
+					nextType = -1;
+					switch(c.getType()) {
+					case Command.BINARY_LOAD:
+						nextType = Command.BINARY_ADDRESS;
+						break;
+					case Command.BINARY_STORE:
+						nextType = Command.BINARY_ADDRESS;
+						break;
+					case Command.BINARY_ADD:
+						nextType = Command.BINARY_RESULT;
+						break;
+					case Command.BINARY_SUB:
+						nextType = Command.BINARY_SUB;
+						break;
+					case Command.BINARY_COMPARE:
+						nextType = Command.BINARY_IF;
+						break;
+					}
+				}
+			}
+			if (nextType != -1) {
+				System.err.println("Unexpeced end of class.");
 			}
 		}
 

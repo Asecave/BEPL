@@ -44,4 +44,8 @@ public class BEPLClass {
 		s += "}";
 		return s;
 	}
+
+	public LinkedList<Command> getCommands() {
+		return commands;
+	}
 }
