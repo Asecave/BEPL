@@ -20,14 +20,16 @@ public class ProgramLoader {
 		
 		while (scanner.hasNext()) {
 			String line = scanner.nextLine();
-			line = line.replaceAll(" ", "");
+			line = line.strip() + '\n';
+			line = line.replaceAll("\t", "");
 			int commentIndex = line.indexOf("#");
 			if (commentIndex != -1) {
 				line = line.substring(0, commentIndex);
 			}
-			line = line.replaceAll("\n", "");
-			line = line.replaceAll("\t", "");
-			builder.append(line);
+			
+			if (line.length() > 1) {
+				builder.append(line);
+			}
 		}
 		
 		return builder.toString();
