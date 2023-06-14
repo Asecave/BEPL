@@ -2,11 +2,11 @@ package com.asecave.expression.commands;
 
 public class CommandClass extends Command {
 
-	public int call;
+	public int reg;
 	
-	public CommandClass(int call, int line) {
+	public CommandClass(int line, int reg) {
 		super(line);
-		this.call = call;
+		this.reg = reg;
 	}
 
 }

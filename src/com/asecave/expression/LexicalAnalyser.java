@@ -24,6 +24,8 @@ public class LexicalAnalyser {
 				tokens.add(new Token(Token.LOCATION, line.substring(1), i - ignoredLines++));
 			} else if (line.startsWith("if")) {
 				tokens.add(new Token(Token.IF, line.substring(3), i - ignoredLines));
+			} else if (line.startsWith("}")) {
+				tokens.add(new Token(Token.ENDIF, line.substring(1), i - ignoredLines));
 			} else if (line.startsWith("in")) {
 				tokens.add(new Token(Token.IN, line.substring(3), i - ignoredLines));
 			} else if (line.startsWith("out")) {

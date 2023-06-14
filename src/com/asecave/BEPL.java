@@ -19,11 +19,15 @@ public class BEPL {
 	LexicalAnalyser lexicalAnalyser;
 	Parser parser;
 	CodeGenerator codeGenerator;
+	ProgramWriter writer;
+	
+	String input = "C:\\Users\\Asecave\\Desktop\\Program.txt";
+	String output = "C:\\Users\\Asecave\\Desktop\\Preload.hex";
 
 	public BEPL(boolean binaryMode) {
 		
 			programLoader = new ProgramLoader();
-			String program = programLoader.load("C:\\Users\\Asecave\\Desktop\\Program.txt");
+			String program = programLoader.load(input);
 		
 		if (binaryMode) {
 			binLexicalAnalyser = new BinLexicalAnalyser();
@@ -49,7 +53,14 @@ public class BEPL {
 			LinkedList<Command> commands = parser.parse(tokens);
 			
 			codeGenerator = new CodeGenerator();
-			codeGenerator.generate(commands);
+			int[] code = codeGenerator.generate(commands);
+			
+			writer = new ProgramWriter();
+			writer.write(code, output);
+			
+			for (int i : code) {
+				System.out.println(Integer.toHexString(i));
+			}
 		}
 	}
 }

@@ -2,10 +2,10 @@ package com.asecave.expression.commands;
 
 public class CommandJump extends Command {
 
-	public int location;
+	public int reg;
 	
-	public CommandJump(int location, int line) {
+	public CommandJump(int line, int reg) {
 		super(line);
-		this.location = location;
+		this.reg = reg;
 	}
 }

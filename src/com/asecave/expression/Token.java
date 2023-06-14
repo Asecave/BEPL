@@ -12,6 +12,7 @@ public class Token {
 	public static final int OUT = 7;
 	public static final int HALT = 8;
 	public static final int EXPRESSION = 9;
+	public static final int ENDIF = 10;
 	
 	private int type;
 	private String lexeme;

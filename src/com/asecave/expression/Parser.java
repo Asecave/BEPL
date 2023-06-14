@@ -18,13 +18,11 @@ import com.asecave.expression.commands.CommandSub;
 
 public class Parser {
 
-	public static LinkedList<Name> classes = new LinkedList<>();
-	public static LinkedList<Location> locations = new LinkedList<>();
-	public static LinkedList<Name> variables = new LinkedList<>();
+	private static LinkedList<Name> classes = new LinkedList<>();
+	private static LinkedList<StorageElement> storage = new LinkedList<>();
 
 	private static int classCounter = 0;
-	private static int locationCounter = 0;
-	private static int varCounter = 0;
+	private static int storageCounter = 0;
 
 	public class Name {
 
@@ -37,14 +35,14 @@ public class Parser {
 		}
 	}
 
-	public class Location {
+	public class StorageElement extends Name {
 
-		int line;
-		Name name;
+		int value;
+		int codeLine;
 
-		public Location(int line, Name name) {
-			this.line = line;
-			this.name = name;
+		public StorageElement(String name, int id, int value) {
+			super(name, id);
+			this.value = value;
 		}
 	}
 
@@ -62,12 +60,32 @@ public class Parser {
 				classes.add(name);
 				break;
 			case Token.LOCATION:
-				name = new Name(lexeme.substring(0, lexeme.length()), locationCounter++);
-				locations.add(new Location(t.getLine(), name));
+				String locName = lexeme.substring(0, lexeme.length());
+				storage.add(new StorageElement(locName, storageCounter++, t.getLine()));
 				break;
 			case Token.VAR:
-				name = new Name(lexeme.substring(0, lexeme.replaceAll(" ", "").indexOf('=')), varCounter++);
-				variables.add(name);
+				String varName;
+				int initialValue = 0;
+				if (lexeme.indexOf('=') != -1) {
+					varName = lexeme.substring(0, lexeme.replaceAll(" ", "").indexOf('='));
+					String rawInitialValue = lexeme.substring(lexeme.indexOf('=') + 1).strip();
+					if (rawInitialValue.matches("[0-9]+")) {
+						initialValue = Integer.parseInt(rawInitialValue);
+						if (initialValue > 255 || initialValue < 0) {
+							System.err.println("Number out of range at " + t.getLine() + ": " + initialValue);
+						}
+					} else {
+						if (rawInitialValue.length() == 3 && rawInitialValue.charAt(0) == '\'' && rawInitialValue.charAt(2) == '\'') {
+							initialValue = rawInitialValue.charAt(1);
+						} else {
+							System.err.println("Invalid value at " + t.getLine() + ": " + rawInitialValue);
+						}
+					}
+				} else {
+					varName = lexeme;
+				}
+				StorageElement var = new StorageElement(varName, storageCounter++, initialValue);
+				storage.add(var);
 				break;
 			}
 		}
@@ -79,17 +97,45 @@ public class Parser {
 			case Token.CLASS_CALL:
 				for (Name n : classes) {
 					if (n.name.equals(lexeme)) {
-						commands.add(new CommandClass(n.id, t.getLine()));
+						commands.add(new CommandLoad(t.getLine(), getClass(n.name), 0));
+						commands.add(new CommandClass(t.getLine(), 0));
 					}
 				}
 				break;
 			case Token.GOTO:
-				for (Location l : locations) {
-					if (l.name.name.equals(lexeme)) {
-						commands.add(new CommandJump(l.line, t.getLine()));
+				for (StorageElement e : storage) {
+					if (e.name.equals(lexeme)) {
+						commands.add(new CommandLoad(t.getLine(), getVar(e.name), 0));
+						commands.add(new CommandJump(t.getLine(), 0));
 					}
 				}
 				break;
+			case Token.IF:
+				String condition = lexeme.substring(lexeme.indexOf('('), lexeme.indexOf(')') - 1);
+				condition = condition.replace(" ", "");
+				char comparator;
+				int compPos;
+				if ((compPos = condition.indexOf('<')) != -1) {
+					comparator = '<';
+				} else if ((compPos = condition.indexOf('>')) != -1) {
+					comparator = '>';
+				} else {
+					compPos = condition.indexOf('=');
+					comparator = '=';
+				}
+				
+				String v1name = condition.substring(0, compPos - 1);
+				String v2name = condition.substring(compPos);
+				int v1id = -1;
+				int v2id = -1;
+				for (StorageElement e : storage) {
+					if (e.name.equals(v1name)) {
+						v1id = getVar(e.name);
+					} else if (e.name.equals(v2name)) {
+						v2id = getVar(e.name);
+					}
+				}
+				
 			}
 		}
 
@@ -104,21 +150,21 @@ public class Parser {
 					String setVar = lexeme.substring(0, eqIndex);
 					String var1 = lexeme.substring(eqIndex + 1, operatorIndex);
 					String var2 = lexeme.substring(operatorIndex + 1);
-					
+
 					commands.add(new CommandLoad(t.getLine(), getVar(var1), 0));
 					commands.add(new CommandLoad(t.getLine(), getVar(var2), 1));
-					
+
 					if (lexeme.charAt(operatorIndex) == '+') {
 						commands.add(new CommandAdd(t.getLine(), 0, 1));
 					} else {
 						commands.add(new CommandSub(t.getLine(), 0, 1));
 					}
-					
+
 					commands.add(new CommandResult(t.getLine(), 2));
 					commands.add(new CommandStore(t.getLine(), getVar(setVar), 2));
-							
+
 				} else if (t.getLexeme().endsWith("++")) {
-					
+
 					String var = lexeme.substring(0, lexeme.length() - 2);
 					commands.add(new CommandLoad(t.getLine(), getVar(var), 0));
 					commands.add(new CommandIncrease(t.getLine(), 0));
@@ -130,13 +176,13 @@ public class Parser {
 					commands.add(new CommandLoad(t.getLine(), getVar(var), 0));
 					commands.add(new CommandDecrease(t.getLine(), 0));
 					commands.add(new CommandStore(t.getLine(), getVar(var), 0));
-					
+
 				} else {
 					System.err.println("Syntax error at line " + t.getLine() + ": " + t.getLexeme());
 				}
 			}
 		}
-		
+
 		for (Token t : tokens) {
 			switch (t.getType()) {
 			case Token.IN:
@@ -155,14 +201,28 @@ public class Parser {
 
 		return commands;
 	}
-	
+
 	private int getVar(String name) {
-		for (Name n : variables) {
+		for (StorageElement n : storage) {
 			if (n.name.equals(name)) {
 				return n.id;
 			}
 		}
 		System.err.println("Variable " + name + " not found.");
 		return -1;
+	}
+	
+	private int getClass(String name) {
+		for (Name n : classes) {
+			if (n.name.equals(name)) {
+				return n.id;
+			}
+		}
+		System.err.println("Class " + name + " not found.");
+		return -1;
+	}
+
+	public static LinkedList<StorageElement> getStorage() {
+		return storage;
 	}
 }
